@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fake Call</title>
+<style>
+  :root{
+    --bg:#0d0f14;
+    --card:#161922;
+    --card2:#1d2230;
+    --accent:#3b82f6;
+    --green:#22c55e;
+    --red:#ef4444;
+    --text:#e6e9f0;
+    --muted:#8a90a3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  .app{
+    width:100%;
+    max-width:480px;
+    padding:20px 18px 90px;
+  }
+  h1{
+    font-size:1.4rem;
+    margin:10px 0 4px;
+  }
+  .sub{
+    color:var(--muted);
+    font-size:0.85rem;
+    margin-bottom:20px;
+  }
+  .card{
+    background:var(--card);
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.3);
+  }
+  .card h2{
+    font-size:1rem;
+    margin:0 0 14px;
+    color:var(--text);
+  }
+  label{
+    display:block;
+    font-size:0.8rem;
+    color:var(--muted);
+    margin-bottom:6px;
+    margin-top:12px;
+  }
+  input[type=text], input[type=number], input[type=time]{
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #2a2f3d;
+    background:var(--card2);
+    color:var(--text);
+    font-size:1rem;
+  }
+  input:focus{
+    outline:none;
+    border-color:var(--accent);
+  }
+  .toggle-group{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .toggle-btn{
+    flex:1;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid #2a2f3d;
+    background:var(--card2);
+    color:var(--muted);
+    font-size:0.85rem;
+    text-align:center;
+    cursor:pointer;
+  }
+  .toggle-btn.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+  button.primary{
+    width:100%;
+    padding:14px;
+    margin-top:18px;
+    border:none;
+    border-radius:12px;
+    background:var(--accent);
+    color:#fff;
+    font-size:1rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  button.primary:active{ opacity:0.85; }
+  .list-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px;
+    background:var(--card2);
+    border-radius:10px;
+    margin-bottom:10px;
+  }
+  .list-item .name{
+    font-weight:600;
+  }
+  .list-item .actions{
+    display:flex;
+    gap:8px;
+  }
+  .list-item button{
+    border:none;
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:0.8rem;
+    cursor:pointer;
+  }
+  .btn-call{
+    background:var(--green);
+    color:#06210f;
+    font-weight:600;
+  }
+  .btn-del{
+    background:#3a1f24;
+    color:#ff8a8a;
+  }
+  .empty{
+    color:var(--muted);
+    font-size:0.85rem;
+    text-align:center;
+    padding:10px 0;
+  }
+  .pending{
+    font-size:0.8rem;
+    color:var(--green);
+    margin-top:10px;
+  }
+
+  /* Incoming call full screen */
+  .call-screen{
+    position:fixed;
+    inset:0;
+    background:linear-gradient(160deg,#11131a,#1a1d2b);
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:space-between;
+    z-index:9999;
+    padding:60px 20px 50px;
+    text-align:center;
+  }
+  .call-screen.show{ display:flex; }
+  .call-top{
+    margin-top:30px;
+  }
+  .call-label{
+    color:var(--muted);
+    font-size:1rem;
+    letter-spacing:1px;
+    margin-bottom:14px;
+  }
+  .avatar{
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    background:var(--card2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2.5rem;
+    font-weight:700;
+    margin:0 auto 20px;
+    border:2px solid #2a2f3d;
+  }
+  .caller-name{
+    font-size:1.8rem;
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .call-status{
+    color:var(--muted);
+    font-size:0.95rem;
+  }
+  .call-actions{
+    display:flex;
+    justify-content:space-between;
+    width:100%;
+    max-width:320px;
+  }
+  .round-btn{
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    border:none;
+    font-size:1.8rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    color:#fff;
+  }
+  .round-btn span.lbl{
+    display:block;
+    font-size:0.7rem;
+    margin-top:6px;
+    color:var(--muted);
+  }
+  .accept-wrap, .reject-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .accept{ background:var(--green); }
+  .reject{ background:var(--red); }
+
+  .connected-screen{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:space-between;
+    height:100%;
+    width:100%;
+  }
+  .connected-screen.show{ display:flex; }
+  .end-btn{
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    background:var(--red);
+    border:none;
+    font-size:1.8rem;
+    color:#fff;
+    cursor:pointer;
+  }
+  .timer{
+    font-size:1.1rem;
+    color:var(--muted);
+    margin-top:10px;
+  }
+  @keyframes pulse{
+    0%{ transform:scale(1); }
+    50%{ transform:scale(1.06); }
+    100%{ transform:scale(1); }
+  }
+  .ringing .avatar{
+    animation:pulse 1.4s infinite;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <h1>📞 Fake Call</h1>
+  <div class="sub">Schedule a fake incoming call screen — fully offline, no data leaves your phone.</div>
+
+  <div class="card">
+    <h2>Add Caller</h2>
+    <label for="callerNameInput">Caller Name</label>
+    <input type="text" id="callerNameInput" placeholder="e.g. Boss, Mom, Client, HR, Amit" maxlength="30">
+    <button class="primary" id="addCallerBtn">Save Caller</button>
+  </div>
+
+  <div class="card">
+    <h2>Saved Callers</h2>
+    <div id="callerList"></div>
+  </div>
+
+  <div class="card">
+    <h2>Schedule a Call</h2>
+    <label for="scheduleCaller">Choose Caller</label>
+    <input type="text" id="scheduleCallerDisplay" readonly placeholder="Select a caller from list below">
+    <select id="scheduleCaller" style="display:none;"></select>
+
+    <label>Mode</label>
+    <div class="toggle-group">
+      <div class="toggle-btn active" id="modeTimerBtn">Timer</div>
+      <div class="toggle-btn" id="modeFixedBtn">Fixed Time</div>
+    </div>
+
+    <div id="timerFields">
+      <label for="minutesInput">Call after (minutes)</label>
+      <input type="number" id="minutesInput" min="0" step="1" placeholder="e.g. 5" value="1">
+    </div>
+
+    <div id="fixedFields" style="display:none;">
+      <label for="timeInput">Call at (today)</label>
+      <input type="time" id="timeInput">
+    </div>
+
+    <button class="primary" id="scheduleBtn">Schedule Call</button>
+    <div class="pending" id="pendingInfo"></div>
+  </div>
+</div>
+
+<!-- Incoming Call Screen -->
+<div class="call-screen ringing" id="callScreen">
+  <div class="ringing-view" id="ringingView" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;">
+    <div class="call-top">
+      <div class="call-label">Incoming Call</div>
+      <div class="avatar" id="ringAvatar">?</div>
+      <div class="caller-name" id="ringName">Unknown</div>
+      <div class="call-status">mobile</div>
+    </div>
+    <div class="call-actions">
+      <div class="reject-wrap">
+        <button class="round-btn reject" id="rejectBtn">✕</button>
+        <span class="lbl">Reject</span>
+      </div>
+      <div class="accept-wrap">
+        <button class="round-btn accept" id="acceptBtn">✓</button>
+        <span class="lbl">Accept</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="connected-screen" id="connectedScreen">
+    <div class="call-top">
+      <div class="call-label">Call Connected</div>
+      <div class="avatar" id="connAvatar">?</div>
+      <div class="caller-name" id="connName">Unknown</div>
+      <div class="timer" id="callTimer">00:00</div>
+    </div>
+    <div>
+      <button class="end-btn" id="endBtn">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'fakecall_callers';
+
+  function loadCallers(){
+    try{
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    }catch(e){ return []; }
+  }
+  function saveCallers(list){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+
+  const callerNameInput = document.getElementById('callerNameInput');
+  const addCallerBtn = document.getElementById('addCallerBtn');
+  const callerListEl = document.getElementById('callerList');
+  const scheduleCallerDisplay = document.getElementById('scheduleCallerDisplay');
+  const scheduleCaller = document.getElementById('scheduleCaller');
+  const modeTimerBtn = document.getElementById('modeTimerBtn');
+  const modeFixedBtn = document.getElementById('modeFixedBtn');
+  const timerFields = document.getElementById('timerFields');
+  const fixedFields = document.getElementById('fixedFields');
+  const minutesInput = document.getElementById('minutesInput');
+  const timeInput = document.getElementById('timeInput');
+  const scheduleBtn = document.getElementById('scheduleBtn');
+  const pendingInfo = document.getElementById('pendingInfo');
+
+  const callScreen = document.getElementById('callScreen');
+  const ringingView = document.getElementById('ringingView');
+  const connectedScreen = document.getElementById('connectedScreen');
+  const ringName = document.getElementById('ringName');
+  const ringAvatar = document.getElementById('ringAvatar');
+  const connName = document.getElementById('connName');
+  const connAvatar = document.getElementById('connAvatar');
+  const acceptBtn = document.getElementById('acceptBtn');
+  const rejectBtn = document.getElementById('rejectBtn');
+  const endBtn = document.getElementById('endBtn');
+  const callTimer = document.getElementById('callTimer');
+
+  let mode = 'timer';
+  let selectedCaller = '';
+  let scheduleTimeoutId = null;
+  let ringAudioCtx = null;
+  let ringInterval = null;
+  let callSeconds = 0;
+  let callIntervalId = null;
+
+  function renderCallerList(){
+    const callers = loadCallers();
+    callerListEl.innerHTML = '';
+    if(callers.length === 0){
+      callerListEl.innerHTML = '<div class="empty">No callers saved yet.</div>';
+      renderScheduleSelect(callers);
+      return;
+    }
+    callers.forEach(function(name){
+      const item = document.createElement('div');
+      item.className = 'list-item';
+      item.innerHTML =
+        '<div class="name">' + escapeHtml(name) + '</div>' +
+        '<div class="actions">' +
+          '<button class="btn-call" data-name="' + escapeHtml(name) + '">Call Now</button>' +
+          '<button class="btn-del" data-name="' + escapeHtml(name) + '">Delete</button>' +
+        '</div>';
+      callerListEl.appendChild(item);
+    });
+    renderScheduleSelect(callers);
+  }
+
+  function renderScheduleSelect(callers){
+    scheduleCaller.innerHTML = '';
+    callers.forEach(function(name){
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      scheduleCaller.appendChild(opt);
+    });
+    if(callers.length > 0){
+      if(!callers.includes(selectedCaller)){
+        selectedCaller = callers[0];
+      }
+      scheduleCaller.value = selectedCaller;
+      scheduleCallerDisplay.value = selectedCaller;
+      scheduleCallerDisplay.placeholder = '';
+    } else {
+      selectedCaller = '';
+      scheduleCallerDisplay.value = '';
+      scheduleCallerDisplay.placeholder = 'Add a caller first';
+    }
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  addCallerBtn.addEventListener('click', function(){
+    const name = callerNameInput.value.trim();
+    if(!name){
+      alert('Please enter a caller name.');
+      return;
+    }
+    const callers = loadCallers();
+    if(callers.includes(name)){
+      alert('This caller already exists.');
+      return;
+    }
+    callers.push(name);
+    saveCallers(callers);
+    callerNameInput.value = '';
+    renderCallerList();
+  });
+
+  callerListEl.addEventListener('click', function(e){
+    const target = e.target;
+    if(target.classList.contains('btn-del')){
+      const name = target.getAttribute('data-name');
+      let callers = loadCallers();
+      callers = callers.filter(function(c){ return c !== name; });
+      saveCallers(callers);
+      renderCallerList();
+    } else if(target.classList.contains('btn-call')){
+      const name = target.getAttribute('data-name');
+      triggerIncomingCall(name);
+    }
+  });
+
+  // Picking caller for scheduling: clicking the readonly field cycles through a simple prompt-free selector
+  scheduleCallerDisplay.addEventListener('click', function(){
+    const callers = loadCallers();
+    if(callers.length === 0){
+      alert('Add a caller first.');
+      return;
+    }
+    // simple cycle picker using native select shown via click
+    scheduleCaller.style.display = 'block';
+    scheduleCaller.style.marginTop = '8px';
+    scheduleCaller.focus();
+  });
+  scheduleCaller.addEventListener('change', function(){
+    selectedCaller = scheduleCaller.value;
+    scheduleCallerDisplay.value = selectedCaller;
+    scheduleCaller.style.display = 'none';
+  });
+  scheduleCaller.addEventListener('blur', function(){
+    scheduleCaller.style.display = 'none';
+  });
+
+  modeTimerBtn.addEventListener('click', function(){
+    mode = 'timer';
+    modeTimerBtn.classList.add('active');
+    modeFixedBtn.classList.remove('active');
+    timerFields.style.display = 'block';
+    fixedFields.style.display = 'none';
+  });
+  modeFixedBtn.addEventListener('click', function(){
+    mode = 'fixed';
+    modeFixedBtn.classList.add('active');
+    modeTimerBtn.classList.remove('active');
+    fixedFields.style.display = 'block';
+    timerFields.style.display = 'none';
+  });
+
+  scheduleBtn.addEventListener('click', function(){
+    const callers = loadCallers();
+    if(callers.length === 0){
+      alert('Add a caller first.');
+      return;
+    }
+    if(!selectedCaller){
+      selectedCaller = callers[0];
+    }
+    let delayMs;
+    if(mode === 'timer'){
+      const mins = parseFloat(minutesInput.value);
+      if(isNaN(mins) || mins < 0){
+        alert('Enter a valid number of minutes.');
+        return;
+      }
+      delayMs = mins * 60 * 1000;
+    } else {
+      const val = timeInput.value;
+      if(!val){
+        alert('Pick a time.');
+        return;
+      }
+      const [h, m] = val.split(':').map(Number);
+      const now = new Date();
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
+      if(target <= now){
+        target.setDate(target.getDate() + 1);
+      }
+      delayMs = target.getTime() - now.getTime();
+    }
+
+    if(scheduleTimeoutId){
+      clearTimeout(scheduleTimeoutId);
+    }
+    const fireAt = new Date(Date.now() + delayMs);
+    pendingInfo.textContent = 'Scheduled: ' + selectedCaller + ' will call at ' +
+      fireAt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) +
+      ' (in ' + Math.round(delayMs/60000) + ' min)';
+
+    const callerForThis = selectedCaller;
+    scheduleTimeoutId = setTimeout(function(){
+      triggerIncomingCall(callerForThis);
+      pendingInfo.textContent = '';
+    }, delayMs);
+  });
+
+  function triggerIncomingCall(name){
+    ringName.textContent = name;
+    ringAvatar.textContent = (name.trim()[0] || '?').toUpperCase();
+    connName.textContent = name;
+    connAvatar.textContent = (name.trim()[0] || '?').toUpperCase();
+    ringingView.style.display = 'flex';
+    connectedScreen.classList.remove('show');
+    callScreen.classList.add('ringing');
+    callScreen.classList.add('show');
+    startRingtone();
+    if(navigator.vibrate){
+      try{ navigator.vibrate([400,200,400,200,400]); }catch(e){}
+    }
+  }
+
+  function startRingtone(){
+    try{
+      ringAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      playBeep();
+      ringInterval = setInterval(playBeep, 1600);
+    }catch(e){}
+  }
+  function playBeep(){
+    if(!ringAudioCtx) return;
+    const osc = ringAudioCtx.createOscillator();
+    const gain = ringAudioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, ringAudioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.2, ringAudioCtx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ringAudioCtx.currentTime + 0.6);
+    osc.connect(gain);
+    gain.connect(ringAudioCtx.destination);
+    osc.start();
+    osc.stop(ringAudioCtx.currentTime + 0.6);
+  }
+  function stopRingtone(){
+    if(ringInterval){
+      clearInterval(ringInterval);
+      ringInterval = null;
+    }
+    if(ringAudioCtx){
+      try{ ringAudioCtx.close(); }catch(e){}
+      ringAudioCtx = null;
+    }
+  }
+
+  acceptBtn.addEventListener('click', function(){
+    stopRingtone();
+    ringingView.style.display = 'none';
+    connectedScreen.classList.add('show');
+    callSeconds = 0;
+    callTimer.textContent = '00:00';
+    callIntervalId = setInterval(function(){
+      callSeconds++;
+      const mm = String(Math.floor(callSeconds/60)).padStart(2,'0');
+      const ss = String(callSeconds%60).padStart(2,'0');
+      callTimer.textContent = mm + ':' + ss;
+    }, 1000);
+  });
+
+  rejectBtn.addEventListener('click', function(){
+    closeCallScreen();
+  });
+
+  endBtn.addEventListener('click', function(){
+    closeCallScreen();
+  });
+
+  function closeCallScreen(){
+    stopRingtone();
+    if(callIntervalId){
+      clearInterval(callIntervalId);
+      callIntervalId = null;
+    }
+    callScreen.classList.remove('show');
+    ringingView.style.display = 'flex';
+    connectedScreen.classList.remove('show');
+  }
+
+  renderCallerList();
+})();
+</script>
+
+</body>
+</html>
